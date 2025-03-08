@@ -1,84 +1,23 @@
-.PHONY: docs
-.PHONY: fixture/main.transactions.json
+images:
+	steam-run svgexport logo.svg ../desktop/build/linux/usr/share/icons/hicolor/512x512/apps/paisa.png 100% 512:512
+	steam-run svgexport logo.svg ../desktop/build/appicon.png 100% 256:256
+	steam-run svgexport logo.svg ../docs/images/favicon.png 100% 256:256
+	steam-run svgexport logo.svg ../docs/apple-touch-icon.png 100% 180:180
+	steam-run svgexport logo.svg ../docs/android-chrome-512x512.png 100% 512:512
+	steam-run svgexport logo.svg ../docs/android-chrome-192x192.png 100% 192:192
+	steam-run svgexport logo.svg ../docs/favicon-16x16.png 100% 16:16
+	steam-run svgexport logo.svg ../docs/favicon-32x32.png 100% 32:32
+	steam-run svgexport logo.svg ../docs/favicon-48x48.png 100% 48:48
+	steam-run svgexport logo.svg ../docs/favicon-64x64.png 100% 64:64
+	steam-run svgexport logo.svg ../docs/favicon-256x256.png 100% 256:256
+	nix-shell -p imagemagick --command 'convert ../docs/favicon-16x16.png ../docs/favicon-32x32.png ../docs/favicon-64x64.png ../docs/favicon.ico'
+	nix-shell -p imagemagick --command 'convert ../docs/favicon-16x16.png ../docs/favicon-32x32.png ../docs/favicon-48x48.png ../docs/favicon-64x64.png ../docs/favicon-256x256.png ../desktop/build/windows/icon.ico'
+	rm ../docs/favicon-48x48.png
+	rm ../docs/favicon-64x64.png
+	rm ../docs/favicon-256x256.png
 
-develop:
-	./node_modules/.bin/concurrently --names "GO,JS" -c "auto" "make serve" "npm run dev"
+logo-black:
+	steam-run svgexport logo-black.svg logo-black-512x512.png 100% 512:512
 
-serve:
-	./node_modules/.bin/nodemon --signal SIGTERM --delay 2000ms --watch '.' --ext go,json --exec 'go run . serve || exit 1'
-
-debug:
-	./node_modules/.bin/concurrently --names "GO,JS" -c "auto" "make serve-now" "npm run dev"
-
-serve-now:
-	./node_modules/.bin/nodemon --signal SIGTERM --delay 2000ms --watch '.' --ext go,json --exec 'TZ=UTC go run . serve --now 2022-02-07 || exit 1'
-
-
-watch:
-	npm run "build:watch"
-docs:
-	mkdocs serve -a 0.0.0.0:8000
-
-sample:
-	go build && ./paisa init && ./paisa update
-
-publish:
-	nix develop --command bash -c 'mkdocs build'
-
-parser:
-	npm run parser-build-debug
-
-lint:
-	./node_modules/.bin/prettier --check src
-	npm run check
-	test -z $$(gofmt -l .)
-
-regen:
-	go build
-	unset PAISA_CONFIG && REGENERATE=true TZ=UTC bun test tests
-
-jstest:
-	bun test --preload ./src/happydom.ts src
-	go build
-	unset PAISA_CONFIG && TZ=UTC bun test tests
-
-jsbuild:
-	npm run build
-
-test: jsbuild jstest
-	go test ./...
-
-windows:
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc go build
-
-
-deploy:
-	fly scale count 2 --region lax --yes
-	docker build -t paisa . --file Dockerfile.demo
-	fly deploy -i paisa:latest --local-only
-	fly scale count 1 --region lax --yes
-
-install:
-	npm run build
-	go build
-	go install
-
-fixture/main.transactions.json:
-	cd /tmp && paisa init
-	cp fixture/main.ledger /tmp/main.ledger
-	cd /tmp && paisa update --journal && paisa serve -p 6500 &
-	sleep 1
-	curl http://localhost:6500/api/transaction | jq .transactions > fixture/main.transactions.json
-	pkill -f 'paisa serve -p 6500'
-
-generate-fonts:
-	bun download-svgs.js
-	node generate-font.js
-
-node2nix:
-	npm install --lockfile-version 2
-	node2nix --development -18 --input package.json \
-	--lock package-lock.json \
-	--node-env ./flake/node-env.nix \
-	--composition ./flake/default.nix \
-	--output ./flake/node-package.nix
+social-images:
+	steam-run svgexport social.svg social-1500x500.png 100% 1500:500
